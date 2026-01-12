@@ -321,20 +321,24 @@ Please confirm this order to proceed. Thank you for choosing AmberKin! 🎮
     }
   };
 
-  const handleDownloadQRCode = async (qrCodeUrl: string, paymentMethodName: string) => {
+  const handleDownloadQRCode = (qrCodeUrl: string, paymentMethodName: string) => {
     try {
-      const response = await fetch(qrCodeUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // For Messenger's in-app browser and better compatibility, use direct link
+      // This avoids CORS issues with fetch() that Messenger's browser may block
       const link = document.createElement('a');
-      link.href = url;
+      link.href = qrCodeUrl;
       link.download = `qr-code-${paymentMethodName.toLowerCase().replace(/\s+/g, '-')}.png`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      
+      // Append to body, click, then remove
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to download QR code:', error);
+      // Fallback: open image in new tab where user can save manually
+      window.open(qrCodeUrl, '_blank');
     }
   };
 
