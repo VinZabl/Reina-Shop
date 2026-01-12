@@ -701,10 +701,8 @@ Please confirm this order to proceed. Thank you for choosing AmberKin! 🎮
                 
                 {/* Account Number with Copy Button */}
                 <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-mono text-cafe-text font-medium text-xl md:text-2xl">
-                      {selectedPaymentMethod.name}# {selectedPaymentMethod.account_number}
-                    </p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm text-cafe-textMuted">Account Number:</p>
                     <button
                       onClick={() => handleCopyAccountNumber(selectedPaymentMethod.account_number)}
                       className="px-3 py-1.5 glass-strong rounded-lg hover:bg-cafe-primary/20 transition-colors duration-200 flex-shrink-0 text-sm font-medium"
@@ -717,6 +715,7 @@ Please confirm this order to proceed. Thank you for choosing AmberKin! 🎮
                       )}
                     </button>
                   </div>
+                  <p className="font-mono text-cafe-text font-medium text-xl md:text-2xl">{selectedPaymentMethod.account_number}</p>
                 </div>
                 
                 {/* Amount and Instructions */}
