@@ -1968,7 +1968,7 @@ const AdminDashboard: React.FC = () => {
                 className="w-full flex items-center space-x-3 p-2 md:p-3 text-left hover:bg-gray-50 rounded-lg transition-colors duration-200"
               >
                 <FilePlus className="h-4 w-4 md:h-5 md:w-5 text-gray-400" />
-                <span className="text-sm md:text-base font-medium text-gray-900">Add New Menu Item</span>
+                <span className="text-sm md:text-base font-medium text-gray-900">Add New Game Item</span>
               </button>
               <button
                 onClick={() => setCurrentView('items')}
