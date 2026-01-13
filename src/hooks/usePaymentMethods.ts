@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 export interface PaymentMethod {
+  uuid_id: string;
   id: string;
   name: string;
   account_number: string;
@@ -202,7 +203,7 @@ export const usePaymentMethods = () => {
     }
   };
 
-  const updatePaymentMethod = async (id: string, updates: Partial<PaymentMethod>) => {
+  const updatePaymentMethod = async (uuidId: string, updates: Partial<PaymentMethod>) => {
     try {
       const { error: updateError } = await supabase
         .from('payment_methods')
@@ -215,7 +216,7 @@ export const usePaymentMethods = () => {
           sort_order: updates.sort_order,
           admin_name: updates.admin_name !== undefined ? updates.admin_name : undefined
         })
-        .eq('id', id);
+        .eq('uuid_id', uuidId);
 
       if (updateError) throw updateError;
 
@@ -226,12 +227,12 @@ export const usePaymentMethods = () => {
     }
   };
 
-  const deletePaymentMethod = async (id: string) => {
+  const deletePaymentMethod = async (uuidId: string) => {
     try {
       const { error: deleteError } = await supabase
         .from('payment_methods')
         .delete()
-        .eq('id', id);
+        .eq('uuid_id', uuidId);
 
       if (deleteError) throw deleteError;
 
@@ -245,7 +246,7 @@ export const usePaymentMethods = () => {
   const reorderPaymentMethods = async (reorderedMethods: PaymentMethod[]) => {
     try {
       const updates = reorderedMethods.map((method, index) => ({
-        id: method.id,
+        uuid_id: method.uuid_id,
         sort_order: index + 1
       }));
 
@@ -253,7 +254,7 @@ export const usePaymentMethods = () => {
         await supabase
           .from('payment_methods')
           .update({ sort_order: update.sort_order })
-          .eq('id', update.id);
+          .eq('uuid_id', update.uuid_id);
       }
 
       await fetchAllPaymentMethods();

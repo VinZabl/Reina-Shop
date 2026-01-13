@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Save, X, ArrowLeft, CreditCard, Upload, ChevronDown, ChevronUp, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, ArrowLeft, CreditCard, Upload, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, AlertTriangle } from 'lucide-react';
 import { usePaymentMethods, PaymentMethod, AdminPaymentGroup } from '../hooks/usePaymentMethods';
 import { supabase } from '../lib/supabase';
 import ImageUpload from './ImageUpload';
@@ -53,6 +53,11 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
     sort_order: 0,
     admin_name: ''
   });
+
+  // Modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteType, setDeleteType] = useState<'method' | 'group' | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ uuidId?: string; adminName?: string; methodName?: string } | null>(null);
 
   React.useEffect(() => {
     refetchAll();
@@ -109,13 +114,22 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
     }
   };
 
-  const handleDeleteAdminGroup = async (adminName: string) => {
-    if (confirm(`Are you sure you want to delete the admin group "${adminName}"? This will not delete the payment methods, but they will become unassigned.`)) {
-      try {
-        await deleteAdminGroup(adminName);
-      } catch (error) {
-        alert(error instanceof Error ? error.message : 'Failed to delete admin group');
-      }
+  const handleDeleteAdminGroup = (adminName: string) => {
+    setDeleteType('group');
+    setDeleteTarget({ adminName });
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteAdminGroup = async () => {
+    if (!deleteTarget?.adminName) return;
+    
+    try {
+      await deleteAdminGroup(deleteTarget.adminName);
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
+      setDeleteType(null);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to delete admin group');
     }
   };
 
@@ -159,14 +173,23 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
     setCurrentView('edit');
   };
 
-  const handleDeleteMethod = async (id: string) => {
-    if (confirm('Are you sure you want to delete this payment method?')) {
-      try {
-        await deletePaymentMethod(id);
-        await fetchAllPaymentMethods();
-      } catch (error) {
-        alert(error instanceof Error ? error.message : 'Failed to delete payment method');
-      }
+  const handleDeleteMethod = (uuidId: string, methodName?: string) => {
+    setDeleteType('method');
+    setDeleteTarget({ uuidId, methodName });
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteMethod = async () => {
+    if (!deleteTarget?.uuidId) return;
+    
+    try {
+      await deletePaymentMethod(deleteTarget.uuidId);
+      await fetchAllPaymentMethods();
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
+      setDeleteType(null);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to delete payment method');
     }
   };
 
@@ -183,15 +206,20 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
       return;
     }
 
-    // Check for duplicate ID when adding (not editing)
-    if (currentView === 'add' && paymentMethods.some(m => m.id === formData.id)) {
-      alert(`A payment method with ID "${formData.id}" already exists. Please use a different ID.`);
-      return;
+    // Check for duplicate ID within the same admin group when adding (not editing)
+    if (currentView === 'add') {
+      const duplicateInGroup = allPaymentMethods.some(
+        m => m.id === formData.id && m.admin_name === formData.admin_name
+      );
+      if (duplicateInGroup) {
+        alert(`A payment method with ID "${formData.id}" already exists in the "${formData.admin_name}" group. Please use a different ID.`);
+        return;
+      }
     }
 
     try {
       if (editingMethod) {
-        await updatePaymentMethod(editingMethod.id, formData);
+        await updatePaymentMethod(editingMethod.uuid_id, formData);
       } else {
         await addPaymentMethod(formData);
       }
@@ -201,7 +229,7 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to save payment method';
       if (errorMessage.includes('duplicate key') || errorMessage.includes('23505')) {
-        alert(`A payment method with ID "${formData.id}" already exists. Please use a different ID.`);
+        alert(`A payment method with ID "${formData.id}" already exists in the "${formData.admin_name}" group. Please use a different ID.`);
       } else {
         alert(errorMessage);
       }
@@ -577,7 +605,7 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
                                 </button>
                                 
                                 <button
-                                  onClick={() => handleDeleteMethod(method.id)}
+                                  onClick={() => handleDeleteMethod(method.uuid_id, method.name)}
                                   className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -633,7 +661,7 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
                       </button>
                       
                       <button
-                        onClick={() => handleDeleteMethod(method.id)}
+                        onClick={() => handleDeleteMethod(method.uuid_id, method.name)}
                         className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -646,6 +674,59 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {deleteType === 'method' ? 'Delete Payment Method' : 'Delete Admin Group'}
+              </h3>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-600 mb-2">
+                {deleteType === 'method' ? (
+                  <>
+                    Are you sure you want to delete <span className="font-semibold text-gray-900">"{deleteTarget?.methodName || 'this payment method'}"</span>?
+                    <br />
+                    <span className="text-sm text-gray-500 mt-1 block">This action cannot be undone.</span>
+                  </>
+                ) : (
+                  <>
+                    Are you sure you want to delete the admin group <span className="font-semibold text-gray-900">"{deleteTarget?.adminName}"</span>?
+                    <br />
+                    <span className="text-sm text-gray-500 mt-1 block">This will not delete the payment methods, but they will become unassigned.</span>
+                  </>
+                )}
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteTarget(null);
+                  setDeleteType(null);
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteType === 'method' ? confirmDeleteMethod : confirmDeleteAdminGroup}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

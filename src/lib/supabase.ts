@@ -163,6 +163,7 @@ export type Database = {
       };
       payment_methods: {
         Row: {
+          uuid_id: string;
           id: string;
           name: string;
           account_number: string;
@@ -175,6 +176,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          uuid_id?: string;
           id: string;
           name: string;
           account_number: string;
@@ -186,6 +188,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          uuid_id?: string;
           id?: string;
           name?: string;
           account_number?: string;
