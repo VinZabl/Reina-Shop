@@ -103,12 +103,17 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) =>
       const fieldIndex = parseInt(fieldIndexStr, 10);
       
       // Apply to all selected games at the same field position
-      selectedItems.forEach(item => {
+      selectedItems.forEach((item, itemIdx) => {
         if (item.customFields && item.customFields[fieldIndex]) {
           const field = item.customFields[fieldIndex];
           const originalId = getOriginalMenuItemId(item.id);
-          const valueKey = `${originalId}_${field.key}`;
-          updates[valueKey] = value;
+          // Find the actual itemIndex from itemsWithCustomFields
+          const actualItemIndex = itemsWithCustomFields.findIndex(i => getOriginalMenuItemId(i.id) === originalId);
+          if (actualItemIndex !== -1) {
+            // Use fieldIndex to ensure uniqueness even if field.key is duplicated
+            const valueKey = `${originalId}_${fieldIndex}_${field.key}`;
+            updates[valueKey] = value;
+          }
         }
       });
     });
@@ -425,9 +430,11 @@ Please confirm this order to proceed. Thank you for choosing Kitty Galore Game C
     return itemsWithCustomFields.every(item => {
       if (!item.customFields) return true;
       const originalId = getOriginalMenuItemId(item.id);
-      return item.customFields.every(field => {
+      const itemIndex = itemsWithCustomFields.findIndex(i => getOriginalMenuItemId(i.id) === originalId);
+      return item.customFields.every((field, fieldIndex) => {
         if (!field.required) return true;
-        const valueKey = `${originalId}_${field.key}`;
+        // Use fieldIndex to ensure uniqueness even if field.key is duplicated
+        const valueKey = `${originalId}_${fieldIndex}_${field.key}`;
         return customFieldValues[valueKey]?.trim() || false;
       });
     });
@@ -516,27 +523,35 @@ Please confirm this order to proceed. Thank you for choosing Kitty Galore Game C
 
               {/* Dynamic Custom Fields grouped by game */}
               {hasAnyCustomFields ? (
-                itemsWithCustomFields.map((item) => (
+                itemsWithCustomFields.map((item, itemIndex) => (
                   <div key={item.id} className="space-y-4 pb-6 border-b border-cafe-primary/20 last:border-b-0 last:pb-0">
                     <div className="mb-4">
                       <h3 className="text-lg font-semibold text-cafe-text">{item.name}</h3>
                       <p className="text-sm text-cafe-textMuted">Please provide the following information for this game</p>
                     </div>
-                    {item.customFields?.map((field) => {
+                    {item.customFields?.map((field, fieldIndex) => {
                       const originalId = getOriginalMenuItemId(item.id);
-                      const valueKey = `${originalId}_${field.key}`;
+                      // Use fieldIndex to ensure uniqueness even if field.key is duplicated within the same game
+                      const valueKey = `${originalId}_${fieldIndex}_${field.key}`;
+                      const inputId = `input-${originalId}-${itemIndex}-${fieldIndex}-${field.key}`;
                       return (
-                        <div key={valueKey}>
-                          <label className="block text-sm font-medium text-cafe-text mb-2">
+                        <div key={`${item.id}-${fieldIndex}-${field.key}`}>
+                          <label htmlFor={inputId} className="block text-sm font-medium text-cafe-text mb-2">
                             {field.label} {field.required && <span className="text-red-500">*</span>}
                           </label>
                           <input
+                            id={inputId}
                             type="text"
+                            name={valueKey}
+                            autoComplete="off"
                             value={customFieldValues[valueKey] || ''}
-                            onChange={(e) => setCustomFieldValues({
-                              ...customFieldValues,
-                              [valueKey]: e.target.value
-                            })}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              setCustomFieldValues(prev => ({
+                                ...prev,
+                                [valueKey]: newValue
+                              }));
+                            }}
                             className="w-full px-4 py-3 glass border border-cafe-primary/30 rounded-lg focus:ring-2 focus:ring-cafe-primary focus:border-cafe-primary transition-all duration-200 text-cafe-text placeholder-cafe-textMuted"
                             placeholder={field.placeholder || field.label}
                             required={field.required}
@@ -551,17 +566,23 @@ Please confirm this order to proceed. Thank you for choosing Kitty Galore Game C
                   <label className="block text-sm font-medium text-cafe-text mb-2">
                     IGN <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={customFieldValues['default_ign'] || ''}
-                    onChange={(e) => setCustomFieldValues({
-                      ...customFieldValues,
-                      ['default_ign']: e.target.value
-                    })}
-                    className="w-full px-4 py-3 glass border border-cafe-primary/30 rounded-lg focus:ring-2 focus:ring-cafe-primary focus:border-cafe-primary transition-all duration-200 text-cafe-text placeholder-cafe-textMuted"
-                    placeholder="In game name"
-                    required
-                  />
+                    <input
+                      id="default-ign-input"
+                      type="text"
+                      name="default_ign"
+                      autoComplete="off"
+                      value={customFieldValues['default_ign'] || ''}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        setCustomFieldValues(prev => ({
+                          ...prev,
+                          ['default_ign']: newValue
+                        }));
+                      }}
+                      className="w-full px-4 py-3 glass border border-cafe-primary/30 rounded-lg focus:ring-2 focus:ring-cafe-primary focus:border-cafe-primary transition-all duration-200 text-cafe-text placeholder-cafe-textMuted"
+                      placeholder="In game name"
+                      required
+                    />
                 </div>
               )}
 
@@ -773,10 +794,11 @@ Please confirm this order to proceed. Thank you for choosing Kitty Galore Game C
             <div className="glass-strong rounded-lg p-4 border border-cafe-primary/30">
               <h4 className="font-medium text-cafe-text mb-2">Customer Details</h4>
               {hasAnyCustomFields ? (
-                itemsWithCustomFields.map((item) => {
+                itemsWithCustomFields.map((item, itemIndex) => {
                   const originalId = getOriginalMenuItemId(item.id);
-                  const fields = item.customFields?.map(field => {
-                    const valueKey = `${originalId}_${field.key}`;
+                  const fields = item.customFields?.map((field, fieldIndex) => {
+                    // Use fieldIndex to ensure uniqueness even if field.key is duplicated
+                    const valueKey = `${originalId}_${fieldIndex}_${field.key}`;
                     const value = customFieldValues[valueKey];
                     return value ? (
                       <p key={valueKey} className="text-sm text-cafe-textMuted">
