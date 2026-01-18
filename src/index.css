@@ -2,30 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Kitty Galore Theme Styles */
+/* Reina Shop Theme Styles */
 /* Glassmorphism utilities */
 .glass {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(26, 26, 26, 0.8);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(231, 70, 148, 0.2);
+  border: 1px solid rgba(220, 38, 38, 0.3);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(26, 26, 26, 0.9);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(231, 70, 148, 0.3);
+  border: 1px solid rgba(220, 38, 38, 0.4);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(26, 26, 26, 0.85);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1.5px solid rgba(231, 70, 148, 0.35);
-  box-shadow: 0 8px 32px 0 rgba(231, 70, 148, 0.25), 
-              0 2px 8px 0 rgba(0, 0, 0, 0.1),
-              inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+  border: 1.5px solid rgba(220, 38, 38, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 
+              0 2px 8px 0 rgba(220, 38, 38, 0.2),
+              inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
 }
 
 .glass-hover {
@@ -33,11 +33,11 @@
 }
 
 .glass-hover:hover {
-  background: rgba(255, 255, 255, 0.65);
-  border-color: rgba(231, 70, 148, 0.5);
-  box-shadow: 0 12px 40px 0 rgba(231, 70, 148, 0.35), 
-              0 4px 12px 0 rgba(0, 0, 0, 0.15),
-              inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
+  background: rgba(26, 26, 26, 0.95);
+  border-color: rgba(220, 38, 38, 0.6);
+  box-shadow: 0 12px 40px 0 rgba(220, 38, 38, 0.3), 
+              0 4px 12px 0 rgba(0, 0, 0, 0.6),
+              inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
 }
 
@@ -46,9 +46,9 @@
 }
 
 .package-card-hover:hover {
-  background: #E74694 !important;
-  border: 2px solid #E74694 !important;
-  box-shadow: 0 4px 12px 0 rgba(231, 70, 148, 0.4) !important;
+  background: #DC2626 !important;
+  border: 2px solid #DC2626 !important;
+  box-shadow: 0 4px 12px 0 rgba(220, 38, 38, 0.5) !important;
   transform: scale(1.02) !important;
 }
 
@@ -59,29 +59,29 @@
   color: white !important;
 }
 
-/* Glow effects for Kitty Galore theme */
+/* Glow effects for Reina Shop theme */
 .glow-blue {
-  box-shadow: 0 0 20px rgba(231, 70, 148, 0.5);
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
 }
 
 .glow-blue-strong {
-  box-shadow: 0 0 30px rgba(231, 70, 148, 0.8);
+  box-shadow: 0 0 30px rgba(220, 38, 38, 0.8);
 }
 
 /* Text glow */
 .text-glow {
-  text-shadow: 0 0 10px rgba(231, 70, 148, 0.8);
+  text-shadow: 0 0 10px rgba(220, 38, 38, 0.8);
 }
 
 /* Legacy cafe color helpers (for compatibility) */
-.bg-cafe-cream { background-color: #F5F5F5; }
-.bg-cafe-beige { background-color: #E5E5E5; }
-.bg-cafe-light { background-color: rgba(255, 255, 255, 0.6); }
-.text-cafe-accent { color: #E74694; }
-.text-cafe-dark { color: #2D1B2E; }
-.border-cafe-accent { border-color: #E74694; }
-.border-cafe-latte { border-color: rgba(231, 70, 148, 0.3); }
-.ring-cafe-accent { --tw-ring-color: #E74694; }
+.bg-cafe-cream { background-color: #1A1A1A; }
+.bg-cafe-beige { background-color: #1F1F1F; }
+.bg-cafe-light { background-color: rgba(26, 26, 26, 0.8); }
+.text-cafe-accent { color: #DC2626; }
+.text-cafe-dark { color: #FFFFFF; }
+.border-cafe-accent { border-color: #DC2626; }
+.border-cafe-latte { border-color: rgba(220, 38, 38, 0.3); }
+.ring-cafe-accent { --tw-ring-color: #DC2626; }
 
 /* Hide scrollbar for mobile nav */
 .scrollbar-hide {
@@ -164,6 +164,6 @@ img {
 
 /* Search input placeholder color */
 input[type="text"]::placeholder {
-  color: #E74694;
+  color: #DC2626;
   opacity: 0.7;
 }

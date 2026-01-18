@@ -5,21 +5,21 @@ export default {
     extend: {
       colors: {
         cafe: {
-          accent: '#E74694', // Pink accent
+          accent: '#DC2626', // Red accent
           dark: '#0A0A0A', // Off-black background
-          cream: '#F5F5F5',
-          beige: '#E5E5E5',
-          latte: '#D5D5D5',
-          espresso: '#E74694',
+          cream: '#1A1A1A',
+          beige: '#1F1F1F',
+          latte: '#252525',
+          espresso: '#DC2626',
           light: '#1A1A1A',
-          // Kitty Galore theme colors
-          primary: '#E74694', // Pink primary
-          secondary: '#F05BA8', // Slightly lighter pink
-          darkBg: '#FFF5F5', // Off-light pink main background
-          darkCard: '#FFF9F9', // Slightly darker card background
-          glass: 'rgba(231, 70, 148, 0.1)', // Glass effect with accent color
-          text: '#2D1B2E', // Dark text for light background
-          textMuted: '#5A4A5B' // Muted text
+          // Reina Shop theme colors
+          primary: '#DC2626', // Red primary
+          secondary: '#EF4444', // Slightly lighter red
+          darkBg: '#0A0A0A', // Off-black main background
+          darkCard: '#1A1A1A', // Dark card background
+          glass: 'rgba(220, 38, 38, 0.1)', // Glass effect with red accent
+          text: '#FFFFFF', // White text for dark background
+          textMuted: '#A0A0A0' // Muted text
         }
       },
       fontFamily: {

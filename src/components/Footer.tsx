@@ -16,7 +16,7 @@ const Footer: React.FC = () => {
   // Footer link columns - can be made configurable through site settings later
   const footerColumns = [
     {
-      title: siteSettings?.site_name || 'Kitty Galore Game Credits',
+      title: siteSettings?.site_name || 'Reina Shop',
       links: [
         { label: siteSettings?.site_description || 'Your Perfect Game Credits Destination', url: '#' },
       ]
@@ -55,13 +55,13 @@ const Footer: React.FC = () => {
   ];
 
   return (
-    <footer className="mt-16" style={{ backgroundColor: '#FFB6C1' }}>
+    <footer className="mt-16" style={{ backgroundColor: '#1A1A1A', borderTop: '1px solid rgba(220, 38, 38, 0.2)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         {/* Top Section - Multi-column Links */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mb-8">
           {footerColumns.map((column, index) => (
             <div key={index} className="flex flex-col">
-              <h4 className="text-sm font-bold text-gray-800 uppercase mb-4">
+              <h4 className="text-sm font-bold text-cafe-text uppercase mb-4">
                 {column.title}
               </h4>
               <ul className="space-y-2">
@@ -69,7 +69,7 @@ const Footer: React.FC = () => {
                   <li key={linkIndex}>
                     <a
                       href={link.url}
-                      className="text-xs text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                      className="text-xs text-cafe-textMuted hover:text-cafe-text transition-colors duration-200"
                     >
                       {link.label}
                     </a>
@@ -81,7 +81,7 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Separator Line */}
-        <div id="footer-separator" className="border-t border-gray-400 my-8"></div>
+        <div id="footer-separator" className="border-t border-cafe-primary/20 my-8"></div>
 
         {/* Bottom Section - Social Media Icons & Copyright */}
         <div className="flex flex-col items-center gap-6">
@@ -96,10 +96,10 @@ const Footer: React.FC = () => {
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full border-2 border-gray-800 flex items-center justify-center hover:bg-gray-800 hover:text-white transition-all duration-200"
+                    className="w-10 h-10 rounded-full border-2 border-cafe-primary/50 flex items-center justify-center hover:bg-cafe-primary hover:text-white transition-all duration-200"
                     aria-label={link.label}
                   >
-                    <Icon className="h-5 w-5 text-gray-800" />
+                    <Icon className="h-5 w-5 text-cafe-text" />
                   </a>
                 );
               })}
@@ -108,8 +108,8 @@ const Footer: React.FC = () => {
 
           {/* Copyright - Centered at the bottom */}
           <div className="text-center">
-            <p className="text-sm text-gray-700">
-              © {new Date().getFullYear()} {siteSettings?.site_name || 'Kitty Galore Game Credits'}. All rights reserved.
+            <p className="text-sm text-cafe-textMuted">
+              © {new Date().getFullYear()} {siteSettings?.site_name || 'Reina Shop'}. All rights reserved.
             </p>
           </div>
         </div>

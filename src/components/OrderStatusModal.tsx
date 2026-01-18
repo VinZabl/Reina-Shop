@@ -93,15 +93,15 @@ const OrderStatusModal: React.FC<OrderStatusModalProps> = ({ orderId, isOpen, on
   const getStatusDisplay = (status: OrderStatus) => {
     switch (status) {
       case 'pending':
-        return { text: 'Processing', icon: Loader2, color: '#4B1F42' };
+        return { text: 'Processing', icon: Loader2, color: '#DC2626' };
       case 'processing':
-        return { text: 'Processing', icon: Loader2, color: '#4B1F42' };
+        return { text: 'Processing', icon: Loader2, color: '#DC2626' };
       case 'approved':
-        return { text: 'Succeeded', icon: CheckCircle, color: '#4B1F42' }; // purple (header color)
+        return { text: 'Succeeded', icon: CheckCircle, color: '#DC2626' }; // red accent
       case 'rejected':
-        return { text: 'Rejected', icon: XCircle, color: '#4B1F42' }; // purple (header color)
+        return { text: 'Rejected', icon: XCircle, color: '#DC2626' }; // red accent
       default:
-        return { text: 'Processing', icon: Loader2, color: '#4B1F42' };
+        return { text: 'Processing', icon: Loader2, color: '#DC2626' };
     }
   };
 
@@ -113,11 +113,11 @@ const OrderStatusModal: React.FC<OrderStatusModalProps> = ({ orderId, isOpen, on
       <div 
         className="flex flex-col rounded-2xl max-w-2xl w-full max-h-[90vh] shadow-2xl overflow-hidden" 
         style={{
-          background: 'rgba(255, 200, 220, 0.4)',
+          background: 'rgba(26, 26, 26, 0.95)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          border: '1.5px solid rgba(255, 182, 193, 0.5)',
-          boxShadow: '0 8px 32px 0 rgba(255, 182, 193, 0.3), 0 2px 8px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+          border: '1.5px solid rgba(220, 38, 38, 0.5)',
+          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.7), 0 2px 8px 0 rgba(220, 38, 38, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -125,17 +125,17 @@ const OrderStatusModal: React.FC<OrderStatusModalProps> = ({ orderId, isOpen, on
         <div 
           className="flex-shrink-0 p-6 flex items-center justify-between rounded-t-2xl" 
           style={{ 
-            background: 'rgba(255, 200, 220, 0.5)',
+            background: 'rgba(26, 26, 26, 0.95)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
             zIndex: 20,
-            borderBottom: '1.5px solid rgba(255, 182, 193, 0.6)',
-            boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.1)'
+            borderBottom: '1.5px solid rgba(220, 38, 38, 0.4)',
+            boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.5)'
           }}
         >
           <div className="flex-1 min-w-0">
             {order && (order.status === 'pending' || order.status === 'processing') && (
-              <p className="text-xs text-yellow-200 mb-2 font-light">
+              <p className="text-xs text-cafe-textMuted mb-2 font-light">
                 Please do not exit this website while your order is being processed
               </p>
             )}
@@ -165,7 +165,7 @@ const OrderStatusModal: React.FC<OrderStatusModalProps> = ({ orderId, isOpen, on
         <div 
           className="flex-1 overflow-y-auto min-h-0 relative" 
           style={{ 
-            background: 'rgba(255, 200, 220, 0.35)',
+            background: 'rgba(26, 26, 26, 0.9)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
             WebkitOverflowScrolling: 'touch',
@@ -177,7 +177,7 @@ const OrderStatusModal: React.FC<OrderStatusModalProps> = ({ orderId, isOpen, on
             className="sticky top-0 left-0 right-0 z-10 pointer-events-none"
             style={{
               height: '32px',
-              background: 'linear-gradient(to bottom, rgba(255, 200, 220, 0.5) 0%, rgba(255, 200, 220, 0.35) 20%, rgba(255, 200, 220, 0.2) 50%, transparent 100%)',
+              background: 'linear-gradient(to bottom, rgba(26, 26, 26, 0.95) 0%, rgba(26, 26, 26, 0.9) 20%, rgba(26, 26, 26, 0.7) 50%, transparent 100%)',
               marginBottom: '-32px'
             }}
           />
@@ -186,7 +186,7 @@ const OrderStatusModal: React.FC<OrderStatusModalProps> = ({ orderId, isOpen, on
 
         {loading && !order ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#4B1F42' }} />
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#DC2626' }} />
           </div>
         ) : order ? (
           <div className="space-y-6">
@@ -218,7 +218,7 @@ const OrderStatusModal: React.FC<OrderStatusModalProps> = ({ orderId, isOpen, on
                   href={siteSettings.footer_support_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 p-3 rounded-lg bg-white/50 hover:bg-white/70 border border-cafe-primary/30 hover:border-cafe-primary/50 transition-all duration-200 group"
+                  className="flex items-center justify-center gap-2 p-3 rounded-lg bg-cafe-darkCard/80 hover:bg-cafe-darkCard border border-cafe-primary/30 hover:border-cafe-primary/50 transition-all duration-200 group"
                 >
                   <MessageCircle className="h-5 w-5 text-cafe-primary group-hover:scale-110 transition-transform duration-200" />
                   <span className="text-sm font-medium text-cafe-text group-hover:text-cafe-primary transition-colors duration-200">
@@ -229,7 +229,7 @@ const OrderStatusModal: React.FC<OrderStatusModalProps> = ({ orderId, isOpen, on
             )}
 
             {/* Order Details */}
-            <div className="bg-white rounded-lg p-4 border border-cafe-primary/30 shadow-md">
+            <div className="bg-cafe-darkCard rounded-lg p-4 border border-cafe-primary/30 shadow-md">
               <h3 className="font-medium text-cafe-text mb-4">Order Details</h3>
               <div className="space-y-3">
                 {order.order_items.map((item, index) => (
@@ -272,13 +272,13 @@ const OrderStatusModal: React.FC<OrderStatusModalProps> = ({ orderId, isOpen, on
               <div className="mt-4 pt-4 border-t border-cafe-primary/30">
                 <div className="flex items-center justify-between text-xl font-semibold text-cafe-text">
                   <span>Total:</span>
-                  <span className="text-white">₱{order.total_price}</span>
+                  <span className="text-cafe-text">₱{order.total_price}</span>
                 </div>
               </div>
             </div>
 
             {/* Customer Information */}
-            <div className="bg-white rounded-lg p-4 border border-cafe-primary/30 shadow-md">
+            <div className="bg-cafe-darkCard rounded-lg p-4 border border-cafe-primary/30 shadow-md">
               <h3 className="font-medium text-cafe-text mb-4">Customer Information</h3>
               {order.customer_info['Multiple Accounts'] ? (
                 // Multiple accounts mode
@@ -324,7 +324,7 @@ const OrderStatusModal: React.FC<OrderStatusModalProps> = ({ orderId, isOpen, on
             {/* Footer */}
             <div className="mt-6 pt-4 border-t border-cafe-primary/20">
               <p className="text-xs text-cafe-textMuted text-center">
-                by Kitty Galore Game Credits
+                by Reina Shop
               </p>
             </div>
           </div>

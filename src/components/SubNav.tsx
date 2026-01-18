@@ -39,11 +39,11 @@ const SubNav: React.FC<SubNavProps> = ({ selectedCategory, onCategoryClick, sear
                 className={`w-full pl-10 pr-10 py-1.5 rounded-full text-sm transition-all duration-200 border flex-shrink-0 ${
                   isSearchFocused || searchQuery
                     ? 'text-white border-transparent bg-cafe-primary'
-                    : 'bg-transparent border-cafe-primary/30 hover:border-cafe-primary hover:bg-white/50'
+                    : 'bg-transparent border-cafe-primary/30 hover:border-cafe-primary hover:bg-cafe-darkCard/50'
                 }`}
                 style={isSearchFocused || searchQuery 
-                  ? { backgroundColor: '#E74694', color: 'white' } 
-                  : { color: '#E74694' }
+                  ? { backgroundColor: '#DC2626', color: 'white' } 
+                  : { color: '#DC2626' }
                 }
               />
               {searchQuery && (
@@ -72,9 +72,9 @@ const SubNav: React.FC<SubNavProps> = ({ selectedCategory, onCategoryClick, sear
                   className={`px-3 py-1.5 rounded-full text-sm transition-all duration-200 border flex-shrink-0 whitespace-nowrap ${
                     selectedCategory === 'all'
                       ? 'text-white border-transparent'
-                      : 'bg-transparent text-cafe-text border-cafe-primary/30 hover:border-cafe-primary hover:bg-white/50'
+                      : 'bg-transparent text-cafe-text border-cafe-primary/30 hover:border-cafe-primary hover:bg-cafe-darkCard/50'
                   }`}
-                  style={selectedCategory === 'all' ? { backgroundColor: '#E74694' } : {}}
+                  style={selectedCategory === 'all' ? { backgroundColor: '#DC2626' } : {}}
                 >
                   All
                 </button>
@@ -84,9 +84,9 @@ const SubNav: React.FC<SubNavProps> = ({ selectedCategory, onCategoryClick, sear
                     className={`px-3 py-1.5 rounded-full text-sm transition-all duration-200 border flex-shrink-0 whitespace-nowrap ${
                       selectedCategory === 'popular'
                         ? 'text-white border-transparent'
-                        : 'bg-transparent text-cafe-text border-cafe-primary/30 hover:border-cafe-primary hover:bg-white/50'
+                        : 'bg-transparent text-cafe-text border-cafe-primary/30 hover:border-cafe-primary hover:bg-cafe-darkCard/50'
                     }`}
-                    style={selectedCategory === 'popular' ? { backgroundColor: '#E74694' } : {}}
+                    style={selectedCategory === 'popular' ? { backgroundColor: '#DC2626' } : {}}
                   >
                     Popular
                   </button>
@@ -98,9 +98,9 @@ const SubNav: React.FC<SubNavProps> = ({ selectedCategory, onCategoryClick, sear
                     className={`px-3 py-1.5 rounded-full text-sm transition-all duration-200 border flex-shrink-0 whitespace-nowrap ${
                       selectedCategory === c.id
                         ? 'text-white border-transparent'
-                        : 'bg-transparent text-cafe-text border-cafe-primary/30 hover:border-cafe-primary hover:bg-white/50'
+                        : 'bg-transparent text-cafe-text border-cafe-primary/30 hover:border-cafe-primary hover:bg-cafe-darkCard/50'
                     }`}
-                    style={selectedCategory === c.id ? { backgroundColor: '#E74694' } : {}}
+                    style={selectedCategory === c.id ? { backgroundColor: '#DC2626' } : {}}
                   >
                     {c.name}
                   </button>

@@ -77,7 +77,7 @@ function MainApp() {
   }, [menuItems, selectedCategory, searchQuery]);
 
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: '#FFB6C1' }}>
+    <div className="min-h-screen relative" style={{ backgroundColor: '#0A0A0A' }}>
       {/* Background logo with 20% opacity - appears on all customer pages */}
       <div 
         className="fixed inset-0 flex items-center justify-center pointer-events-none z-0"
@@ -86,7 +86,7 @@ function MainApp() {
           backgroundSize: 'contain',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center',
-          opacity: 0.2
+          opacity: 0.1
         }}
       />
       

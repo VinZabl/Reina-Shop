@@ -137,23 +137,23 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
           <div 
             className="flex flex-col rounded-2xl max-w-2xl w-full max-h-[90vh] shadow-2xl overflow-hidden" 
             style={{
-              background: 'rgba(255, 200, 220, 0.4)',
+              background: 'rgba(26, 26, 26, 0.95)',
               backdropFilter: 'blur(24px)',
               WebkitBackdropFilter: 'blur(24px)',
-              border: '1.5px solid rgba(255, 182, 193, 0.5)',
-              boxShadow: '0 8px 32px 0 rgba(255, 182, 193, 0.3), 0 2px 8px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.4)'
+              border: '1.5px solid rgba(220, 38, 38, 0.5)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.7), 0 2px 8px 0 rgba(220, 38, 38, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div 
               className="flex-shrink-0 p-6 flex items-center justify-between rounded-t-2xl" 
               style={{ 
-                background: 'rgba(255, 200, 220, 0.5)',
+                background: 'rgba(26, 26, 26, 0.95)',
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
                 zIndex: 20,
-                borderBottom: '1.5px solid rgba(255, 182, 193, 0.6)',
-                boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.1)'
+                borderBottom: '1.5px solid rgba(220, 38, 38, 0.4)',
+                boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.5)'
               }}
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -188,7 +188,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
             <div 
               className="flex-1 overflow-y-auto min-h-0 relative" 
               style={{ 
-                background: 'rgba(255, 200, 220, 0.35)',
+                background: 'rgba(26, 26, 26, 0.9)',
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
                 WebkitOverflowScrolling: 'touch',
@@ -200,7 +200,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
                 className="sticky top-0 left-0 right-0 z-10 pointer-events-none"
                 style={{
                   height: '32px',
-                  background: 'linear-gradient(to bottom, rgba(255, 200, 220, 0.5) 0%, rgba(255, 200, 220, 0.35) 20%, rgba(255, 200, 220, 0.2) 50%, transparent 100%)',
+                  background: 'linear-gradient(to bottom, rgba(26, 26, 26, 0.95) 0%, rgba(26, 26, 26, 0.9) 20%, rgba(26, 26, 26, 0.7) 50%, transparent 100%)',
                   marginBottom: '-32px'
                 }}
               />
@@ -265,30 +265,30 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
                                   <button
                                     key={variation.id}
                                     onClick={() => handleItemSelect(variation)}
-                                    className="bg-white rounded-lg p-3 text-left group shadow-md relative overflow-hidden package-card-hover"
+                                    className="bg-cafe-darkCard rounded-lg p-3 text-left group shadow-md relative overflow-hidden package-card-hover border border-cafe-primary/20"
                                     style={{
-                                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.5)'
                                     }}
                                   >
                                     <div className="flex flex-col">
-                                      <div className="font-semibold text-gray-900 text-sm mb-1">
+                                      <div className="font-semibold text-cafe-text text-sm mb-1">
                                         {variation.name}
                                       </div>
                                       {variation.description && (
-                                        <div className="text-xs text-gray-600 mb-2 line-clamp-2">
+                                        <div className="text-xs text-cafe-textMuted mb-2 line-clamp-2">
                                           {variation.description}
                                         </div>
                                       )}
                                       <div className="mt-auto">
-                                        <div className="text-base font-bold text-gray-900">
+                                        <div className="text-base font-bold text-cafe-text">
                                           ₱{discountedPrice.toFixed(2)}
                                         </div>
                                         {isDiscounted && (
                                           <div className="flex items-center gap-2 mt-1">
-                                            <div className="text-xs text-gray-500 line-through">
+                                            <div className="text-xs text-cafe-textMuted line-through">
                                               ₱{originalPrice.toFixed(2)}
                                             </div>
-                                            <div className="text-xs text-gray-900 font-semibold">
+                                            <div className="text-xs text-cafe-text font-semibold">
                                               -{item.discountPercentage}%
                                             </div>
                                           </div>

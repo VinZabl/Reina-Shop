@@ -28,7 +28,7 @@ const Cart: React.FC<CartProps> = ({
           <div className="mb-4 flex justify-center">
             <img 
               src="/logo.png" 
-              alt="Kitty Galore Logo"
+              alt="Reina Shop Logo"
               className="h-24 sm:h-32 md:h-40 w-auto object-contain"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
@@ -40,7 +40,7 @@ const Cart: React.FC<CartProps> = ({
           <button
             onClick={onContinueShopping}
             className="text-white px-6 py-3 rounded-full hover:opacity-90 transition-all duration-200"
-            style={{ backgroundColor: '#E74694' }}
+            style={{ backgroundColor: '#DC2626' }}
           >
             Browse Games
           </button>
@@ -146,7 +146,7 @@ const Cart: React.FC<CartProps> = ({
           <button
             onClick={onCheckout}
             className="flex-1 text-white py-4 rounded-xl hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] font-medium text-lg"
-            style={{ backgroundColor: '#E74694' }}
+            style={{ backgroundColor: '#DC2626' }}
           >
             Continue to Checkout
           </button>
