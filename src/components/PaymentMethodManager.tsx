@@ -49,6 +49,7 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
     account_number: '',
     account_name: '',
     qr_code_url: '',
+    icon_url: '',
     active: true,
     sort_order: 0,
     admin_name: ''
@@ -151,6 +152,7 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
       account_number: '',
       account_name: '',
       qr_code_url: '',
+      icon_url: '',
       active: true,
       sort_order: nextSortOrder,
       admin_name: adminName || ''
@@ -166,6 +168,7 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
       account_number: method.account_number,
       account_name: method.account_name,
       qr_code_url: method.qr_code_url,
+      icon_url: method.icon_url || '',
       active: method.active,
       sort_order: method.sort_order,
       admin_name: method.admin_name || ''
@@ -236,9 +239,9 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
 
     try {
       if (editingMethod) {
-        await updatePaymentMethod(editingMethod.uuid_id, formData);
+        await updatePaymentMethod(editingMethod.uuid_id, { ...formData, icon_url: formData.icon_url || null });
       } else {
-        await addPaymentMethod(formData);
+        await addPaymentMethod({ ...formData, icon_url: formData.icon_url || null });
       }
       await fetchAllPaymentMethods();
       setCurrentView('list');
@@ -347,6 +350,14 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
               </div>
 
               <div>
+                <ImageUpload
+                  currentImage={formData.icon_url || undefined}
+                  onImageChange={(imageUrl) => setFormData({ ...formData, icon_url: imageUrl || '' })}
+                  label="Payment icon (shown on checkout and admin list)"
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-black mb-2">Account Number/Phone *</label>
                 <input
                   type="text"
@@ -372,6 +383,7 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
                 <ImageUpload
                   currentImage={formData.qr_code_url}
                   onImageChange={(imageUrl) => setFormData({ ...formData, qr_code_url: imageUrl || '' })}
+                  label="QR code (for payment details modal)"
                 />
               </div>
 
@@ -588,7 +600,13 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
                             >
                               <div className="flex items-center space-x-4">
                                 <div className="flex-shrink-0">
-                                  {method.qr_code_url ? (
+                                  {method.icon_url ? (
+                                    <img
+                                      src={method.icon_url}
+                                      alt={method.name}
+                                      className="w-12 h-12 rounded-lg border border-gray-300 object-contain bg-white"
+                                    />
+                                  ) : method.qr_code_url ? (
                                     <img
                                       src={method.qr_code_url}
                                       alt={`${method.name} QR Code`}
@@ -656,7 +674,13 @@ const PaymentMethodManager: React.FC<PaymentMethodManagerProps> = ({ onBack }) =
                   >
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        {method.qr_code_url ? (
+                        {method.icon_url ? (
+                          <img
+                            src={method.icon_url}
+                            alt={method.name}
+                            className="w-12 h-12 rounded-lg border border-gray-300 object-contain bg-white"
+                          />
+                        ) : method.qr_code_url ? (
                           <img
                             src={method.qr_code_url}
                             alt={`${method.name} QR Code`}

@@ -1,9 +1,33 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { CartItem, MenuItem, Variation, AddOn } from '../types';
 
+const CART_STORAGE_KEY = 'reina_cart_items';
+
+const loadCartFromStorage = (): CartItem[] => {
+  try {
+    const s = localStorage.getItem(CART_STORAGE_KEY);
+    if (!s) return [];
+    const parsed = JSON.parse(s);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
 export const useCart = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>(loadCartFromStorage);
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Persist cart so it survives refresh or back navigation
+  useEffect(() => {
+    try {
+      if (cartItems.length > 0) {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+      } else {
+        localStorage.removeItem(CART_STORAGE_KEY);
+      }
+    } catch {}
+  }, [cartItems]);
 
   const calculateItemPrice = (item: MenuItem, variation?: Variation, addOns?: AddOn[]) => {
     let price = item.basePrice;
@@ -104,6 +128,9 @@ export const useCart = () => {
 
   const clearCart = useCallback(() => {
     setCartItems([]);
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY);
+    } catch {}
   }, []);
 
   const getTotalPrice = useCallback(() => {

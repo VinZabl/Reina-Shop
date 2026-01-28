@@ -71,12 +71,12 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
 
   return (
     <>
-      {/* Uniform vertical layout for all items: image on top, title, subtitle */}
+      {/* Game icon with title and subtitle overlaid at bottom */}
       <div 
         onClick={handleCardClick}
         className={`flex flex-col items-center transition-all duration-300 group rounded-xl overflow-hidden ${!item.available ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'} glass-card hover:glass-hover`}
       >
-        {/* Game Image Icon on Top - corner to corner */}
+        {/* Game Image Icon - title and subtitle overlaid at bottom */}
         <div className="relative w-full aspect-square overflow-hidden bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg transition-transform duration-300 group-hover:scale-105">
           {item.image ? (
             <img
@@ -98,36 +98,38 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
               <div className="text-4xl opacity-20 text-gray-400">🎮</div>
             )}
           </div>
-        </div>
-        
-        {/* Game Title and Subtitle - compact padding */}
-        <div className="w-full px-2 py-1.5">
-          <h4 
-            ref={nameRef}
-            className={`text-cafe-text font-bold text-center text-xs sm:text-sm mb-0 ${
-              shouldScroll ? 'animate-scroll-text' : ''
-            }`}
-            style={shouldScroll ? {
-              display: 'inline-block',
-            } : {}}
+          {/* Overlay: gradient + title and subtitle */}
+          <div 
+            className="absolute inset-x-0 bottom-0 pt-8 pb-1.5 px-2"
+            style={{
+              background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)',
+            }}
           >
-            {shouldScroll ? (
-              <>
-                <span>{item.name}</span>
-                <span className="mx-4">•</span>
-                <span>{item.name}</span>
-              </>
-            ) : (
-              item.name
+            <h4 
+              ref={nameRef}
+              className={`text-white font-bold text-center text-xs sm:text-sm mb-0 drop-shadow-md ${
+                shouldScroll ? 'animate-scroll-text' : ''
+              }`}
+              style={shouldScroll ? {
+                display: 'inline-block',
+              } : {}}
+            >
+              {shouldScroll ? (
+                <>
+                  <span>{item.name}</span>
+                  <span className="mx-4">•</span>
+                  <span>{item.name}</span>
+                </>
+              ) : (
+                item.name
+              )}
+            </h4>
+            {item.subtitle && (
+              <p className="text-white/90 text-xs text-center mt-0.5 drop-shadow-md">
+                {item.subtitle}
+              </p>
             )}
-          </h4>
-          
-          {/* Subtitle */}
-          {item.subtitle && (
-            <p className="text-xs text-cafe-textMuted text-center mt-0.5">
-              {item.subtitle}
-            </p>
-          )}
+          </div>
         </div>
       </div>
 

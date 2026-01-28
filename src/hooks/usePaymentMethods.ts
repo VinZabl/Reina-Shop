@@ -8,6 +8,7 @@ export interface PaymentMethod {
   account_number: string;
   account_name: string;
   qr_code_url: string;
+  icon_url?: string | null;
   active: boolean;
   sort_order: number;
   admin_name?: string | null;
@@ -186,6 +187,7 @@ export const usePaymentMethods = () => {
           account_number: method.account_number,
           account_name: method.account_name,
           qr_code_url: method.qr_code_url,
+          icon_url: method.icon_url ?? null,
           active: method.active,
           sort_order: method.sort_order,
           admin_name: method.admin_name || null
@@ -212,6 +214,7 @@ export const usePaymentMethods = () => {
           account_number: updates.account_number,
           account_name: updates.account_name,
           qr_code_url: updates.qr_code_url,
+          icon_url: updates.icon_url !== undefined ? updates.icon_url : undefined,
           active: updates.active,
           sort_order: updates.sort_order,
           admin_name: updates.admin_name !== undefined ? updates.admin_name : undefined

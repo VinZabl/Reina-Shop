@@ -1,11 +1,20 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { ArrowLeft, Upload, X, Copy, Check, Download, Eye } from 'lucide-react';
-import { CartItem, PaymentMethod, CustomField, OrderStatus } from '../types';
+import { ArrowLeft, Upload, X, Copy, Check, Download, Eye, CreditCard } from 'lucide-react';
+import { CartItem, CustomField, OrderStatus } from '../types';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
 import { useImageUpload } from '../hooks/useImageUpload';
 import { useOrders } from '../hooks/useOrders';
 import { useSiteSettings } from '../hooks/useSiteSettings';
 import OrderStatusModal from './OrderStatusModal';
+
+const CHECKOUT_STORAGE_KEYS = {
+  paymentMethodUuid: 'reina_checkout_paymentMethodUuid',
+  customFieldValues: 'reina_checkout_customFieldValues',
+  receiptImageUrl: 'reina_checkout_receiptImageUrl',
+  receiptPreview: 'reina_checkout_receiptPreview',
+  bulkInputValues: 'reina_checkout_bulkInputValues',
+  bulkSelectedGames: 'reina_checkout_bulkSelectedGames',
+};
 
 interface CheckoutProps {
   cartItems: CartItem[];
@@ -20,27 +29,87 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack, onNa
   const { createOrder, fetchOrderById } = useOrders();
   const { siteSettings } = useSiteSettings();
   const orderOption = siteSettings?.order_option || 'order_via_messenger';
-  const [step, setStep] = useState<'details' | 'payment' | 'order'>('details');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [paymentMethodUuid, setPaymentMethodUuid] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(CHECKOUT_STORAGE_KEYS.paymentMethodUuid);
+    } catch { return null; }
+  });
+  const [showPaymentDetailsModal, setShowPaymentDetailsModal] = useState(false);
   const paymentDetailsRef = useRef<HTMLDivElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
   const [, setShowScrollIndicator] = useState(true);
-  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem(CHECKOUT_STORAGE_KEYS.customFieldValues);
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [receiptImageUrl, setReceiptImageUrl] = useState<string | null>(null);
-  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [receiptImageUrl, setReceiptImageUrl] = useState<string | null>(() =>
+    localStorage.getItem(CHECKOUT_STORAGE_KEYS.receiptImageUrl)
+  );
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(() =>
+    localStorage.getItem(CHECKOUT_STORAGE_KEYS.receiptPreview)
+  );
   const [receiptError, setReceiptError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [hasCopiedMessage, setHasCopiedMessage] = useState(false);
   const [copiedAccountNumber, setCopiedAccountNumber] = useState(false);
   const [copiedAccountName, setCopiedAccountName] = useState(false);
-  const [bulkInputValues, setBulkInputValues] = useState<Record<string, string>>({});
-  const [bulkSelectedGames, setBulkSelectedGames] = useState<string[]>([]);
+  const [bulkInputValues, setBulkInputValues] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem(CHECKOUT_STORAGE_KEYS.bulkInputValues);
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+  const [bulkSelectedGames, setBulkSelectedGames] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(CHECKOUT_STORAGE_KEYS.bulkSelectedGames);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [orderId, setOrderId] = useState<string | null>(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [existingOrderStatus, setExistingOrderStatus] = useState<OrderStatus | null>(null);
   const [, setIsCheckingExistingOrder] = useState(true);
+
+  // Restore payment method from localStorage (by uuid)
+  useEffect(() => {
+    const saved = localStorage.getItem(CHECKOUT_STORAGE_KEYS.paymentMethodUuid);
+    if (saved && paymentMethods.length > 0) {
+      const method = paymentMethods.find(m => m.uuid_id === saved);
+      if (method) setPaymentMethodUuid(method.uuid_id);
+    }
+  }, [paymentMethods]);
+
+  // Persist checkout state to localStorage
+  useEffect(() => {
+    localStorage.setItem(CHECKOUT_STORAGE_KEYS.customFieldValues, JSON.stringify(customFieldValues));
+  }, [customFieldValues]);
+  useEffect(() => {
+    if (receiptImageUrl) localStorage.setItem(CHECKOUT_STORAGE_KEYS.receiptImageUrl, receiptImageUrl);
+    else localStorage.removeItem(CHECKOUT_STORAGE_KEYS.receiptImageUrl);
+  }, [receiptImageUrl]);
+  useEffect(() => {
+    if (receiptPreview) localStorage.setItem(CHECKOUT_STORAGE_KEYS.receiptPreview, receiptPreview);
+    else localStorage.removeItem(CHECKOUT_STORAGE_KEYS.receiptPreview);
+  }, [receiptPreview]);
+  useEffect(() => {
+    localStorage.setItem(CHECKOUT_STORAGE_KEYS.bulkInputValues, JSON.stringify(bulkInputValues));
+  }, [bulkInputValues]);
+  useEffect(() => {
+    localStorage.setItem(CHECKOUT_STORAGE_KEYS.bulkSelectedGames, JSON.stringify(bulkSelectedGames));
+  }, [bulkSelectedGames]);
+  useEffect(() => {
+    if (paymentMethodUuid) localStorage.setItem(CHECKOUT_STORAGE_KEYS.paymentMethodUuid, paymentMethodUuid);
+    else localStorage.removeItem(CHECKOUT_STORAGE_KEYS.paymentMethodUuid);
+  }, [paymentMethodUuid]);
+
+  // Show payment details modal when payment method is selected (tarchier-style)
+  useEffect(() => {
+    if (paymentMethodUuid) setShowPaymentDetailsModal(true);
+  }, [paymentMethodUuid]);
 
   // Extract original menu item ID from cart item ID (format: "menuItemId:::CART:::timestamp-random")
   // This allows us to group all packages from the same game together
@@ -137,50 +206,25 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack, onNa
 
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [step]);
-
-  // Auto-scroll to payment details when payment method is selected
-  React.useEffect(() => {
-    if (paymentMethod && paymentDetailsRef.current) {
-      setShowScrollIndicator(true); // Reset to show indicator when payment method is selected
-      setTimeout(() => {
-        paymentDetailsRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }, 100);
-    }
-  }, [paymentMethod]);
+  }, []);
 
   // Check if buttons section is visible to hide scroll indicator
   React.useEffect(() => {
     if (!buttonsRef.current) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          // If buttons are visible, hide the scroll indicator
-          if (entry.isIntersecting) {
-            setShowScrollIndicator(false);
-          } else {
-            setShowScrollIndicator(true);
-          }
+          if (entry.isIntersecting) setShowScrollIndicator(false);
+          else setShowScrollIndicator(true);
         });
       },
-      {
-        threshold: 0.1, // Trigger when 10% of the element is visible
-        rootMargin: '-50px 0px' // Add some margin to trigger earlier
-      }
+      { threshold: 0.1, rootMargin: '-50px 0px' }
     );
-
     observer.observe(buttonsRef.current);
+    return () => observer.disconnect();
+  }, []);
 
-    return () => {
-      observer.disconnect();
-    };
-  }, [step]);
-
-  const selectedPaymentMethod = paymentMethods.find(method => method.id === paymentMethod);
+  const selectedPaymentMethod = paymentMethods.find(method => method.uuid_id === paymentMethodUuid);
   
   const handleBulkInputChange = (fieldKey: string, value: string) => {
     setBulkInputValues(prev => ({ ...prev, [fieldKey]: value }));
@@ -194,18 +238,6 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack, onNa
     } else {
       setBulkSelectedGames(prev => prev.filter(id => id !== originalId));
     }
-  };
-
-  const handleProceedToPayment = () => {
-    setStep('payment');
-  };
-
-  const handleProceedToOrder = () => {
-    if (!paymentMethod) {
-      setReceiptError('Please select a payment method');
-      return;
-    }
-    setStep('order');
   };
 
   const handleReceiptUpload = async (file: File) => {
@@ -449,7 +481,7 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
   }, [fetchOrderById]);
 
   const handlePlaceOrder = () => {
-    if (!paymentMethod) {
+    if (!paymentMethodUuid) {
       setReceiptError('Please select a payment method');
       return;
     }
@@ -467,7 +499,7 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
   };
 
   const handlePlaceOrderDirect = async () => {
-    if (!paymentMethod) {
+    if (!paymentMethodUuid) {
       setReceiptError('Please select a payment method');
       return;
     }
@@ -517,7 +549,7 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
       const newOrder = await createOrder({
         order_items: cartItems,
         customer_info: customerInfo as Record<string, string | unknown>,
-        payment_method_id: selectedPaymentMethod.id,
+        payment_method_id: selectedPaymentMethod.uuid_id,
         receipt_url: receiptImageUrl,
         total_price: totalPrice,
       });
@@ -589,35 +621,29 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
     />
   );
 
-  if (step === 'details') {
-    return (
-      <>
-        <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center mb-8">
+  return (
+    <>
+      <div className="max-w-4xl mx-auto px-4 pt-4 pb-8">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-8">
           <button
             onClick={onBack}
-            className="flex items-center text-cafe-textMuted hover:text-cafe-primary transition-colors duration-200"
+            className="flex items-center justify-self-start text-cafe-textMuted hover:text-cafe-primary transition-colors duration-200"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-3xl font-semibold text-cafe-text text-center flex-1">Order Details</h1>
+          <h1 className="text-3xl font-semibold text-cafe-text text-center">Top Up</h1>
+          <div aria-hidden="true" className="w-10" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Customer Details Form */}
-          <div className="glass-card rounded-xl p-6">
-            <h2 className="text-2xl font-medium text-cafe-text mb-6">Customer Information</h2>
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-cafe-primary text-white" aria-hidden="true">1</span>
+              <h2 className="text-2xl font-medium text-cafe-text">Customer Information</h2>
+            </div>
             
             <form className="space-y-6">
-              {/* Show count of items with custom fields */}
-              {hasAnyCustomFields && itemsWithCustomFields.length > 0 && (
-                <div className="mb-4 p-3 glass border border-cafe-primary/30 rounded-lg">
-                  <p className="text-sm text-cafe-text">
-                    <span className="font-semibold">{itemsWithCustomFields.length}</span> game{itemsWithCustomFields.length > 1 ? 's' : ''} require{itemsWithCustomFields.length === 1 ? 's' : ''} additional information
-                  </p>
-                </div>
-              )}
-
               {/* Bulk Input Section */}
               {itemsWithCustomFields.length >= 2 && (
                 <div className="mb-6 p-4 glass-strong border border-cafe-primary/30 rounded-lg">
@@ -735,344 +761,58 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
                 </div>
               )}
 
-              <button
-                onClick={handleProceedToPayment}
-                disabled={!isDetailsValid}
-                className={`w-full py-4 rounded-xl font-medium text-lg transition-all duration-200 transform ${
-                  isDetailsValid
-                    ? 'text-white hover:opacity-90 hover:scale-[1.02]'
-                    : 'glass text-cafe-textMuted cursor-not-allowed'
-                }`}
-                style={isDetailsValid ? { backgroundColor: '#DC2626' } : {}}
-              >
-                Proceed to Payment
-              </button>
             </form>
           </div>
-
-          {/* Order Summary */}
-          <div className="glass-card rounded-xl p-6">
-            <h2 className="text-2xl font-medium text-cafe-text mb-6">Order Summary</h2>
-            
-            <div className="space-y-4 mb-6">
-              {cartItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between py-2 border-b border-cafe-primary/30">
-                  <div>
-                    <h4 className="font-medium text-cafe-text">{item.name}</h4>
-                    {item.selectedVariation && (
-                      <p className="text-sm text-cafe-textMuted">Package: {item.selectedVariation.name}</p>
-                    )}
-                    {item.selectedAddOns && item.selectedAddOns.length > 0 && (
-                      <p className="text-sm text-cafe-textMuted">
-                        Add-ons: {item.selectedAddOns.map(addOn => addOn.name).join(', ')}
-                      </p>
-                    )}
-                    <p className="text-sm text-cafe-textMuted">₱{item.totalPrice} x {item.quantity}</p>
-                  </div>
-                  <span className="font-semibold text-cafe-text">₱{item.totalPrice * item.quantity}</span>
-                </div>
-              ))}
-            </div>
-            
-            <div className="border-t border-cafe-primary/30 pt-4">
-              <div className="flex items-center justify-between text-2xl font-semibold text-cafe-text">
-                <span>Total:</span>
-                <span className="text-cafe-text">₱{totalPrice}</span>
-              </div>
-            </div>
-            
-          </div>
         </div>
-      </div>
-        {renderOrderStatusModal()}
-      </>
-    );
-  }
 
-  // Payment Step
-  if (step === 'payment') {
-    return (
-      <>
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center mb-8">
-        <button
-          onClick={() => setStep('details')}
-          className="flex items-center text-cafe-textMuted hover:text-cafe-primary transition-colors duration-200"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-3xl font-semibold text-cafe-text text-center flex-1">Payment</h1>
-      </div>
+        <hr className="border-0 border-t border-cafe-primary/20 my-2" aria-hidden="true" />
 
-      <div className="max-w-2xl mx-auto">
-        {/* Payment Method Selection */}
-        <div className="glass-card rounded-xl p-6">
-          <h2 className="text-2xl font-medium text-cafe-text mb-6">Choose Payment Method</h2>
-          
+        {/* Single-page: Payment method selection (tarchier-style) */}
+        <div className="p-6 mt-2" ref={paymentDetailsRef}>
+          <div className="flex items-center gap-3 mb-6">
+            <span className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-cafe-primary text-white" aria-hidden="true">2</span>
+            <h2 className="text-2xl font-medium text-cafe-text">Choose Payment Method</h2>
+          </div>
           <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
             {paymentMethods.map((method) => (
               <button
-                key={method.id}
+                key={method.uuid_id}
                 type="button"
                 onClick={() => {
-                  setPaymentMethod(method.id as PaymentMethod);
+                  setPaymentMethodUuid(method.uuid_id);
+                  setShowPaymentDetailsModal(true);
                 }}
                 className={`p-2 md:p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center gap-2 ${
-                  paymentMethod === method.id
-                    ? 'border-transparent text-white'
-                    : 'glass border-cafe-primary/30 text-cafe-text hover:border-cafe-primary hover:glass-strong'
+                  paymentMethodUuid === method.uuid_id ? 'border-transparent text-white' : 'glass border-cafe-primary/30 text-cafe-text hover:border-cafe-primary hover:glass-strong'
                 }`}
-                style={paymentMethod === method.id ? { backgroundColor: '#DC2626' } : {}}
+                style={paymentMethodUuid === method.uuid_id ? { backgroundColor: '#DC2626' } : {}}
               >
-                {/* Icon on Top */}
-                <div className="relative w-12 h-12 md:w-14 md:h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg flex items-center justify-center">
-                  <span className="text-xl md:text-2xl">💳</span>
+                <div className="w-12 h-12 md:w-14 md:h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg flex items-center justify-center p-1">
+                  {method.icon_url ? (
+                    <img src={method.icon_url} alt="" className="w-full h-full object-contain" />
+                  ) : (
+                    <CreditCard className="w-6 h-6 md:w-7 md:h-7 text-cafe-textMuted" />
+                  )}
                 </div>
-                {/* Text Below */}
                 <span className="font-medium text-xs md:text-sm text-center">{method.name}</span>
               </button>
             ))}
           </div>
-
-          {/* Payment Details with QR Code */}
-          {selectedPaymentMethod && (
-            <div 
-              ref={paymentDetailsRef}
-              className="glass-strong rounded-lg p-6 mb-6 border border-cafe-primary/30"
-            >
-              <h3 className="font-medium text-cafe-text mb-4">Payment Details</h3>
-              <div className="space-y-4">
-                {/* Payment Method Name */}
-                <div>
-                  <p className="text-lg font-semibold text-cafe-text">{selectedPaymentMethod.name}</p>
-                </div>
-                
-                {/* Account Name with Copy Button */}
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-sm text-cafe-textMuted">Account Name:</p>
-                    <button
-                      onClick={() => handleCopyAccountName(selectedPaymentMethod.account_name)}
-                      className="px-3 py-1.5 glass-strong rounded-lg hover:bg-cafe-primary/20 transition-colors duration-200 flex-shrink-0 text-sm font-medium"
-                      title="Copy account name"
-                    >
-                      {copiedAccountName ? (
-                        <span className="text-green-400">Copied!</span>
-                      ) : (
-                        <span className="text-cafe-text">Copy</span>
-                      )}
-                    </button>
-                  </div>
-                  <p className="text-cafe-text font-medium">{selectedPaymentMethod.account_name}</p>
-                </div>
-                
-                {/* Other Option */}
-                <div>
-                  <h3 className="font-medium text-cafe-text text-center">Other Option</h3>
-                </div>
-                
-                {/* Download QR Button and QR Image */}
-                <div className="flex flex-col items-center gap-3">
-                  {selectedPaymentMethod.qr_code_url ? (
-                    <>
-                      {!isMessengerBrowser && (
-                        <button
-                          onClick={() => handleDownloadQRCode(selectedPaymentMethod.qr_code_url, selectedPaymentMethod.name)}
-                          className="px-3 py-1.5 glass-strong rounded-lg hover:bg-cafe-primary/20 transition-colors duration-200 text-sm font-medium text-cafe-text flex items-center gap-2"
-                          title="Download QR code"
-                        >
-                          <Download className="h-4 w-4" />
-                          <span>Download QR</span>
-                        </button>
-                      )}
-                      {isMessengerBrowser && (
-                        <p className="text-xs text-cafe-textMuted text-center">Long-press the QR code to save</p>
-                      )}
-                      <img 
-                        src={selectedPaymentMethod.qr_code_url} 
-                        alt={`${selectedPaymentMethod.name} QR Code`}
-                        className="w-32 h-32 rounded-lg border-2 border-cafe-primary/30 shadow-sm"
-                      />
-                    </>
-                  ) : (
-                    <div className="w-32 h-32 rounded-lg border-2 border-cafe-primary/30 shadow-sm bg-gray-100 flex items-center justify-center p-4">
-                      <p className="text-sm text-cafe-textMuted text-center">QR code not available</p>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Account Number with Copy Button */}
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-sm text-cafe-textMuted">Account Number:</p>
-                    <button
-                      onClick={() => handleCopyAccountNumber(selectedPaymentMethod.account_number)}
-                      className="px-3 py-1.5 glass-strong rounded-lg hover:bg-cafe-primary/20 transition-colors duration-200 flex-shrink-0 text-sm font-medium"
-                      title="Copy account number"
-                    >
-                      {copiedAccountNumber ? (
-                        <span className="text-green-400">Copied!</span>
-                      ) : (
-                        <span className="text-cafe-text">Copy</span>
-                      )}
-                    </button>
-                  </div>
-                  <p className="font-mono text-cafe-text font-medium text-xl md:text-2xl">{selectedPaymentMethod.account_number}</p>
-                </div>
-                
-                {/* Amount and Instructions */}
-                <div className="pt-2 border-t border-cafe-primary/20">
-                  <p className="text-xl font-semibold text-cafe-text mb-2">Amount: ₱{totalPrice}</p>
-                  <p className="text-sm text-cafe-textMuted">Press the copy button to copy the account number or download the QR code, make your payment, then click "Confirm" to proceed to the order page where you can upload your payment receipt.</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Confirm Button */}
-          <button
-            onClick={handleProceedToOrder}
-            disabled={!paymentMethod}
-            className={`w-full py-4 rounded-xl font-medium text-lg transition-all duration-200 transform mb-6 ${
-              paymentMethod
-                ? 'text-white hover:opacity-90 hover:scale-[1.02]'
-                : 'glass text-cafe-textMuted cursor-not-allowed'
-            }`}
-            style={paymentMethod ? { backgroundColor: '#DC2626' } : {}}
-          >
-            Confirm
-          </button>
-
-          {/* Payment instructions */}
           <div className="glass border border-cafe-primary/30 rounded-lg p-4">
-            <h4 className="font-medium text-cafe-text mb-2">📸 Payment Proof Required</h4>
             <p className="text-sm text-cafe-textMuted">
-              After making your payment, you'll be able to upload a screenshot of your payment receipt in the next step. This helps us verify and process your order quickly.
+              Pay using any of the methods above → screenshot the receipt → then send to our Messenger after submitting your order.
             </p>
           </div>
         </div>
-      </div>
-    </div>
-      {renderOrderStatusModal()}
-      </>
-    );
-  }
 
-  // Order Step
-  if (step === 'order') {
-    return (
-      <>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center mb-8">
-          <button
-            onClick={() => setStep('payment')}
-            className="flex items-center text-cafe-textMuted hover:text-cafe-primary transition-colors duration-200"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-3xl font-semibold text-cafe-text text-center flex-1">Order</h1>
-        </div>
+        <hr className="border-0 border-t border-cafe-primary/20 my-2" aria-hidden="true" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Final Order Summary */}
-          <div className="glass-card rounded-xl p-6">
-            <h2 className="text-2xl font-medium text-cafe-text mb-6">Final Order Summary</h2>
-            
-            <div className="space-y-4 mb-6">
-              <div className="glass-strong rounded-lg p-4 border border-cafe-primary/30">
-                <h4 className="font-medium text-cafe-text mb-2">Customer Details</h4>
-                {hasAnyCustomFields ? (
-                  itemsWithCustomFields.map((item) => {
-                    const originalId = getOriginalMenuItemId(item.id);
-                    const fields = item.customFields?.map((field, fieldIndex) => {
-                      // Use fieldIndex to ensure uniqueness even if field.key is duplicated
-                      const valueKey = `${originalId}_${fieldIndex}_${field.key}`;
-                      const value = customFieldValues[valueKey];
-                      return value ? (
-                        <p key={valueKey} className="text-sm text-cafe-textMuted">
-                          {field.label}: {value}
-                        </p>
-                      ) : null;
-                    }).filter(Boolean);
-                    
-                    if (!fields || fields.length === 0) return null;
-                    
-                    return (
-                      <div key={item.id} className="mb-3 pb-3 border-b border-cafe-primary/20 last:border-b-0 last:pb-0">
-                        <p className="text-sm font-semibold text-cafe-text mb-1">{item.name}:</p>
-                        {fields}
-                      </div>
-                    );
-                  })
-                ) : (
-                  customFieldValues['default_ign'] && (
-                    <p className="text-sm text-cafe-textMuted">
-                      IGN: {customFieldValues['default_ign']}
-                    </p>
-                  )
-                )}
-                {/* Payment Method Information */}
-                {selectedPaymentMethod && (
-                  <div className="mt-3 pt-3 border-t border-cafe-primary/20">
-                    <p className="text-sm font-semibold text-cafe-text mb-1">Payment Method:</p>
-                    <p className="text-sm text-cafe-textMuted">{selectedPaymentMethod.name}</p>
-                  </div>
-                )}
-              </div>
-
-              {cartItems.map((item) => (
-                <div key={item.id} className="flex items-start gap-4 py-2 border-b border-cafe-primary/30">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg relative">
-                    {item.image ? (
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          const fallback = e.currentTarget.parentElement?.querySelector('.fallback-icon');
-                          if (fallback) fallback.classList.remove('hidden');
-                        }}
-                      />
-                    ) : null}
-                    <div className={`absolute inset-0 w-full h-full flex items-center justify-center ${item.image ? 'hidden' : ''} fallback-icon`}>
-                      <div className="text-xl opacity-20 text-gray-400">🎮</div>
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-cafe-text">{item.name}</h4>
-                    {item.selectedVariation && (
-                      <p className="text-sm text-cafe-textMuted">Package: {item.selectedVariation.name}</p>
-                    )}
-                    {item.selectedAddOns && item.selectedAddOns.length > 0 && (
-                      <p className="text-sm text-cafe-textMuted">
-                        Add-ons: {item.selectedAddOns.map(addOn => 
-                          addOn.quantity && addOn.quantity > 1 
-                            ? `${addOn.name} x${addOn.quantity}`
-                            : addOn.name
-                        ).join(', ')}
-                      </p>
-                    )}
-                    <p className="text-sm text-cafe-textMuted">₱{item.totalPrice} x {item.quantity}</p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <span className="font-semibold text-cafe-text">₱{item.totalPrice * item.quantity}</span>
-                  </div>
-                </div>
-              ))}
+        {/* Receipt Upload and Place Order (single page - no order summary column) */}
+        <div className="p-6 mt-2" ref={buttonsRef}>
+            <div className="flex items-center gap-3 mb-6">
+              <span className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-cafe-primary text-white" aria-hidden="true">3</span>
+              <h2 className="text-2xl font-medium text-cafe-text">Payment Receipt</h2>
             </div>
-            
-            <div className="pt-4 mb-6">
-              <div className="flex items-center justify-between text-2xl font-semibold text-cafe-text">
-                <span>Total:</span>
-                <span className="text-cafe-text">₱{totalPrice}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Receipt Upload and Place Order */}
-          <div className="glass-card rounded-xl p-6">
-            <h2 className="text-2xl font-medium text-cafe-text mb-6">Payment Receipt</h2>
             
             {/* Receipt Upload Section */}
             <div className="mb-6">
@@ -1153,14 +893,14 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
               )}
             </div>
 
-            <div ref={buttonsRef}>
+            <div>
               {/* Copy button - only show for order_via_messenger */}
               {orderOption === 'order_via_messenger' && (
                 <button
                   onClick={handleCopyMessage}
-                  disabled={uploadingReceipt || !paymentMethod || !receiptImageUrl}
+                  disabled={uploadingReceipt || !paymentMethodUuid || !receiptImageUrl}
                   className={`w-full py-3 rounded-xl font-medium transition-all duration-200 transform mb-3 flex items-center justify-center space-x-2 ${
-                    !uploadingReceipt && paymentMethod && receiptImageUrl
+                    !uploadingReceipt && paymentMethodUuid && receiptImageUrl
                       ? 'glass border border-cafe-primary/30 text-cafe-text hover:border-cafe-primary hover:glass-strong'
                       : 'glass border border-cafe-primary/20 text-cafe-textMuted cursor-not-allowed'
                   }`}
@@ -1201,16 +941,16 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
                   {(!existingOrderStatus || existingOrderStatus === 'rejected') && (
                     <button
                       onClick={handlePlaceOrderDirect}
-                      disabled={!paymentMethod || !receiptImageUrl || uploadingReceipt || isPlacingOrder}
+                      disabled={!paymentMethodUuid || !receiptImageUrl || uploadingReceipt || isPlacingOrder}
                       className={`relative w-full py-4 rounded-xl font-medium text-lg transition-all duration-200 transform ${
-                        paymentMethod && receiptImageUrl && !uploadingReceipt && !isPlacingOrder
+                        paymentMethodUuid && receiptImageUrl && !uploadingReceipt && !isPlacingOrder
                           ? 'text-white hover:opacity-90 hover:scale-[1.02]'
                           : 'glass text-cafe-textMuted cursor-not-allowed'
                       }`}
-                      style={paymentMethod && receiptImageUrl && !uploadingReceipt && !isPlacingOrder ? { backgroundColor: '#DC2626' } : {}}
+                      style={paymentMethodUuid && receiptImageUrl && !uploadingReceipt && !isPlacingOrder ? { backgroundColor: '#DC2626' } : {}}
                     >
                       <div className={`absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                        paymentMethod && receiptImageUrl && !uploadingReceipt && !isPlacingOrder
+                        paymentMethodUuid && receiptImageUrl && !uploadingReceipt && !isPlacingOrder
                           ? 'bg-cafe-primary text-white'
                           : 'bg-cafe-textMuted/30 text-cafe-textMuted'
                       }`}>
@@ -1228,13 +968,13 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
                   {/* Messenger Order Placement */}
                   <button
                     onClick={handlePlaceOrder}
-                    disabled={!paymentMethod || !receiptImageUrl || uploadingReceipt || !hasCopiedMessage}
+                    disabled={!paymentMethodUuid || !receiptImageUrl || uploadingReceipt || !hasCopiedMessage}
                     className={`w-full py-4 rounded-xl font-medium text-lg transition-all duration-200 transform ${
-                      paymentMethod && receiptImageUrl && !uploadingReceipt && hasCopiedMessage
+                      paymentMethodUuid && receiptImageUrl && !uploadingReceipt && hasCopiedMessage
                         ? 'text-white hover:opacity-90 hover:scale-[1.02]'
                         : 'glass text-cafe-textMuted cursor-not-allowed'
                     }`}
-                    style={paymentMethod && receiptImageUrl && !uploadingReceipt && hasCopiedMessage ? { backgroundColor: '#DC2626' } : {}}
+                    style={paymentMethodUuid && receiptImageUrl && !uploadingReceipt && hasCopiedMessage ? { backgroundColor: '#DC2626' } : {}}
                   >
                     {uploadingReceipt ? 'Uploading Receipt...' : 'Place Order via Messenger'}
                   </button>
@@ -1247,13 +987,95 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
             </div>
           </div>
         </div>
-      </div>
-        {renderOrderStatusModal()}
-      </>
-    );
-  }
 
-  return null;
+      {/* Payment Details Modal (tarchier-style) */}
+      {showPaymentDetailsModal && selectedPaymentMethod && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={() => setShowPaymentDetailsModal(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Payment details"
+        >
+          <div
+            className="glass-strong rounded-xl p-6 max-w-md w-full border border-cafe-primary/30 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-cafe-text">Payment Details</h3>
+              <button
+                type="button"
+                onClick={() => setShowPaymentDetailsModal(false)}
+                className="p-1.5 glass-strong rounded-lg hover:bg-cafe-primary/20 transition-colors duration-200"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5 text-cafe-text" />
+              </button>
+            </div>
+            <p className="text-sm text-cafe-textMuted mb-4">
+              Press the copy button to copy the number or download the QR code, make a payment, then proceed to place your order.
+            </p>
+            <p className="text-lg font-semibold text-cafe-text mb-2">{selectedPaymentMethod.name}</p>
+            <p className="text-xl font-semibold text-cafe-text mb-4">₱{totalPrice}</p>
+            <div className="space-y-3 mb-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm text-cafe-textMuted">Number:</span>
+                <button
+                  type="button"
+                  onClick={() => handleCopyAccountNumber(selectedPaymentMethod.account_number)}
+                  className="p-1.5 glass-strong rounded-lg hover:bg-cafe-primary/20 text-sm font-medium text-cafe-text flex items-center gap-2"
+                  title="Copy account number"
+                >
+                  {copiedAccountNumber ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+                  {selectedPaymentMethod.account_number}
+                </button>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm text-cafe-textMuted">Name:</span>
+                <button
+                  type="button"
+                  onClick={() => handleCopyAccountName(selectedPaymentMethod.account_name)}
+                  className="p-1.5 glass-strong rounded-lg hover:bg-cafe-primary/20 text-sm font-medium text-cafe-text flex items-center gap-2"
+                  title="Copy account name"
+                >
+                  {copiedAccountName ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+                  {selectedPaymentMethod.account_name}
+                </button>
+              </div>
+            </div>
+            <div className="pt-3 border-t border-cafe-primary/20">
+              <p className="text-sm text-cafe-textMuted mb-2">Other Option</p>
+              {selectedPaymentMethod.qr_code_url ? (
+                <>
+                  {!isMessengerBrowser && (
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadQRCode(selectedPaymentMethod.qr_code_url, selectedPaymentMethod.name)}
+                      className="px-2 py-1.5 glass-strong rounded-lg hover:bg-cafe-primary/20 text-xs font-medium text-cafe-text flex items-center gap-1.5 mb-2"
+                      title="Download QR code"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download QR
+                    </button>
+                  )}
+                  {isMessengerBrowser && <p className="text-xs text-cafe-textMuted mb-2">Long-press the QR code to save</p>}
+                  <img
+                    src={selectedPaymentMethod.qr_code_url}
+                    alt={`${selectedPaymentMethod.name} QR`}
+                    className="w-32 h-32 rounded-lg border-2 border-cafe-primary/30"
+                  />
+                </>
+              ) : (
+                <p className="text-sm text-cafe-textMuted">No QR Code Available</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renderOrderStatusModal()}
+    </>
+  );
 };
 
 export default Checkout;

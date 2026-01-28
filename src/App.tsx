@@ -11,12 +11,57 @@ import Footer from './components/Footer';
 import AdminDashboard from './components/AdminDashboard';
 import { useMenu } from './hooks/useMenu';
 
+const CUSTOMER_VIEW_KEY = 'reina_customer_view';
+const CUSTOMER_CATEGORY_KEY = 'reina_customer_category';
+const CUSTOMER_SEARCH_KEY = 'reina_customer_search';
+
+function getInitialView(): 'menu' | 'cart' | 'checkout' {
+  try {
+    const v = localStorage.getItem(CUSTOMER_VIEW_KEY);
+    if (v === 'menu' || v === 'cart' || v === 'checkout') return v;
+  } catch {}
+  return 'menu';
+}
+
+function getInitialCategory(): string {
+  try {
+    const c = localStorage.getItem(CUSTOMER_CATEGORY_KEY);
+    if (c != null && c !== '') return c;
+  } catch {}
+  return 'all';
+}
+
+function getInitialSearch(): string {
+  try {
+    const s = localStorage.getItem(CUSTOMER_SEARCH_KEY);
+    if (s != null) return s;
+  } catch {}
+  return '';
+}
+
 function MainApp() {
   const cart = useCart();
   const { menuItems } = useMenu();
-  const [currentView, setCurrentView] = React.useState<'menu' | 'cart' | 'checkout'>('menu');
-  const [selectedCategory, setSelectedCategory] = React.useState<string>('all');
-  const [searchQuery, setSearchQuery] = React.useState<string>('');
+  const [currentView, setCurrentView] = React.useState<'menu' | 'cart' | 'checkout'>(getInitialView);
+  const [selectedCategory, setSelectedCategory] = React.useState<string>(getInitialCategory);
+  const [searchQuery, setSearchQuery] = React.useState<string>(getInitialSearch);
+
+  // Persist customer page state so it survives refresh or accidental back
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(CUSTOMER_VIEW_KEY, currentView);
+    } catch {}
+  }, [currentView]);
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(CUSTOMER_CATEGORY_KEY, selectedCategory);
+    } catch {}
+  }, [selectedCategory]);
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(CUSTOMER_SEARCH_KEY, searchQuery);
+    } catch {}
+  }, [searchQuery]);
 
   const handleViewChange = (view: 'menu' | 'cart' | 'checkout') => {
     setCurrentView(view);
@@ -24,21 +69,21 @@ function MainApp() {
 
   const handleCategoryClick = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    // Clear search when changing category
     setSearchQuery('');
   };
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    // If searching, set category to 'all' to show all results
     if (query.trim() !== '') {
       setSelectedCategory('all');
     }
   };
 
-  // Handler for when item is added from package selection modal
+  // When item is added from package selection modal, go to cart (skip scroll restore so cart scrolls to top)
   const handleItemAdded = React.useCallback(() => {
-    // Redirect to cart view after adding item from modal
+    try {
+      localStorage.setItem('reina_skipScrollRestore', 'true');
+    } catch {}
     setCurrentView('cart');
   }, []);
 
@@ -46,6 +91,13 @@ function MainApp() {
   const hasPopularItems = React.useMemo(() => {
     return menuItems.some(item => Boolean(item.popular) === true);
   }, [menuItems]);
+
+  // If on cart or checkout but cart is empty, go back to menu
+  React.useEffect(() => {
+    if ((currentView === 'cart' || currentView === 'checkout') && cart.cartItems.length === 0) {
+      setCurrentView('menu');
+    }
+  }, [currentView, cart.cartItems.length]);
 
   // If user is on popular category but there are no popular items, redirect to 'all'
   React.useEffect(() => {
@@ -118,7 +170,7 @@ function MainApp() {
       )}
       
       {currentView === 'cart' && (
-        <Cart 
+        <Cart
           cartItems={cart.cartItems}
           updateQuantity={cart.updateQuantity}
           removeFromCart={cart.removeFromCart}
@@ -130,7 +182,7 @@ function MainApp() {
       )}
       
       {currentView === 'checkout' && (
-        <Checkout 
+        <Checkout
           cartItems={cart.cartItems}
           totalPrice={cart.getTotalPrice()}
           onBack={() => handleViewChange('cart')}
