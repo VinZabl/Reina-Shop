@@ -773,28 +773,28 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
             <span className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-cafe-primary text-white" aria-hidden="true">2</span>
             <h2 className="text-2xl font-medium text-cafe-text">Choose Payment Method</h2>
           </div>
-          <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
+          <div className="grid grid-cols-6 gap-2 md:gap-3 mb-6">
             {paymentMethods.map((method) => (
               <button
                 key={method.uuid_id}
                 type="button"
+                aria-label={method.name}
                 onClick={() => {
                   setPaymentMethodUuid(method.uuid_id);
                   setShowPaymentDetailsModal(true);
                 }}
-                className={`p-2 md:p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center gap-2 ${
+                className={`w-10 h-10 md:w-12 md:h-12 p-0 rounded-xl border-2 transition-all duration-200 flex items-center justify-center overflow-hidden ${
                   paymentMethodUuid === method.uuid_id ? 'border-transparent text-white' : 'glass border-cafe-primary/30 text-cafe-text hover:border-cafe-primary hover:glass-strong'
                 }`}
                 style={paymentMethodUuid === method.uuid_id ? { backgroundColor: '#DC2626' } : {}}
               >
-                <div className="w-12 h-12 md:w-14 md:h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg flex items-center justify-center p-1">
-                  {method.icon_url ? (
-                    <img src={method.icon_url} alt="" className="w-full h-full object-contain" />
-                  ) : (
-                    <CreditCard className="w-6 h-6 md:w-7 md:h-7 text-cafe-textMuted" />
-                  )}
-                </div>
-                <span className="font-medium text-xs md:text-sm text-center">{method.name}</span>
+                {method.icon_url ? (
+                  <img src={method.icon_url} alt={method.name} className="w-full h-full object-contain p-0.5" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cafe-darkCard to-cafe-darkBg">
+                    <CreditCard className="w-5 h-5 md:w-6 md:h-6 text-cafe-textMuted" />
+                  </div>
+                )}
               </button>
             ))}
           </div>
@@ -1043,26 +1043,26 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
                 </button>
               </div>
             </div>
-            <div className="pt-3 border-t border-cafe-primary/20">
-              <p className="text-sm text-cafe-textMuted mb-2">Other Option</p>
+            <div className="pt-3 border-t border-cafe-primary/20 flex flex-col items-center">
+              <p className="text-sm text-cafe-textMuted mb-3">Other Option</p>
               {selectedPaymentMethod.qr_code_url ? (
                 <>
                   {!isMessengerBrowser && (
                     <button
                       type="button"
                       onClick={() => handleDownloadQRCode(selectedPaymentMethod.qr_code_url, selectedPaymentMethod.name)}
-                      className="px-2 py-1.5 glass-strong rounded-lg hover:bg-cafe-primary/20 text-xs font-medium text-cafe-text flex items-center gap-1.5 mb-2"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 glass-strong rounded-lg hover:bg-cafe-primary/20 text-cafe-text font-medium mb-3"
                       title="Download QR code"
                     >
                       <Download className="h-4 w-4" />
                       Download QR
                     </button>
                   )}
-                  {isMessengerBrowser && <p className="text-xs text-cafe-textMuted mb-2">Long-press the QR code to save</p>}
+                  {isMessengerBrowser && <p className="text-xs text-cafe-textMuted mb-3 text-center">Long-press the QR code to save</p>}
                   <img
                     src={selectedPaymentMethod.qr_code_url}
                     alt={`${selectedPaymentMethod.name} QR`}
-                    className="w-32 h-32 rounded-lg border-2 border-cafe-primary/30"
+                    className="w-32 h-32 rounded-lg border-2 border-cafe-primary/30 mx-auto block"
                   />
                 </>
               ) : (
