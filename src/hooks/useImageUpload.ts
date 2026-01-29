@@ -10,10 +10,12 @@ export const useImageUpload = () => {
       setUploading(true);
       setUploadProgress(0);
 
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error('Please upload a valid image file (JPEG, PNG, WebP, or GIF)');
+      // Validate file type (include HEIC for iOS camera)
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic'];
+      const allowedMime = allowedTypes.includes(file.type);
+      const allowedExt = /\.(jpe?g|png|webp|gif|heic)$/i.test(file.name);
+      if (!allowedMime && !allowedExt) {
+        throw new Error('Please upload a valid image file (JPEG, PNG, WebP, GIF, or HEIC)');
       }
 
       // Validate file size (5MB limit)
@@ -46,7 +48,7 @@ export const useImageUpload = () => {
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false,
-          contentType: file.type
+          contentType: file.type || 'image/jpeg'
         });
 
       clearInterval(progressInterval);

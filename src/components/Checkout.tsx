@@ -244,22 +244,34 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack, onNa
     try {
       setReceiptError(null);
       setReceiptFile(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setReceiptPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+
+      // Create preview first so UI shows "receipt attached" immediately (helps iOS)
+      const previewPromise = new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve((e.target?.result as string) ?? '');
+        reader.onerror = () => reject(new Error('Preview failed'));
+        reader.readAsDataURL(file);
+      });
+      const dataUrl = await previewPromise;
+      setReceiptPreview(dataUrl);
 
       // Upload to Supabase
       const url = await uploadImage(file, 'payment-receipts');
-      setReceiptImageUrl(url);
+      // Use requestAnimationFrame + setTimeout so state update runs in next tick and
+      // reliably triggers re-render on iOS (avoids batching/timing issues)
+      if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame(() => {
+          setReceiptImageUrl(url);
+        });
+      } else {
+        setTimeout(() => setReceiptImageUrl(url), 0);
+      }
     } catch (error) {
       console.error('Error uploading receipt:', error);
       setReceiptError(error instanceof Error ? error.message : 'Failed to upload receipt');
       setReceiptFile(null);
       setReceiptPreview(null);
+      setReceiptImageUrl(null);
     }
   };
 
@@ -270,6 +282,9 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack, onNa
     setReceiptError(null);
     setHasCopiedMessage(false); // Reset copy state when receipt is removed
   };
+
+  // Single source of truth: receipt is attached and upload finished (for button enable on all devices including iOS)
+  const hasReceiptAttached = Boolean(receiptImageUrl) && !uploadingReceipt;
 
   // Generate the order message text
   const generateOrderMessage = (): string => {
@@ -827,7 +842,7 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
                   </div>
                   <input
                     type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/heic"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
@@ -898,9 +913,9 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
               {orderOption === 'order_via_messenger' && (
                 <button
                   onClick={handleCopyMessage}
-                  disabled={uploadingReceipt || !paymentMethodUuid || !receiptImageUrl}
+                  disabled={!paymentMethodUuid || !hasReceiptAttached}
                   className={`w-full py-3 rounded-xl font-medium transition-all duration-200 transform mb-3 flex items-center justify-center space-x-2 ${
-                    !uploadingReceipt && paymentMethodUuid && receiptImageUrl
+                    paymentMethodUuid && hasReceiptAttached
                       ? 'glass border border-cafe-primary/30 text-cafe-text hover:border-cafe-primary hover:glass-strong'
                       : 'glass border border-cafe-primary/20 text-cafe-textMuted cursor-not-allowed'
                   }`}
@@ -941,16 +956,16 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
                   {(!existingOrderStatus || existingOrderStatus === 'rejected') && (
                     <button
                       onClick={handlePlaceOrderDirect}
-                      disabled={!paymentMethodUuid || !receiptImageUrl || uploadingReceipt || isPlacingOrder}
+                      disabled={!paymentMethodUuid || !hasReceiptAttached || isPlacingOrder}
                       className={`relative w-full py-4 rounded-xl font-medium text-lg transition-all duration-200 transform ${
-                        paymentMethodUuid && receiptImageUrl && !uploadingReceipt && !isPlacingOrder
+                        paymentMethodUuid && hasReceiptAttached && !isPlacingOrder
                           ? 'text-white hover:opacity-90 hover:scale-[1.02]'
                           : 'glass text-cafe-textMuted cursor-not-allowed'
                       }`}
-                      style={paymentMethodUuid && receiptImageUrl && !uploadingReceipt && !isPlacingOrder ? { backgroundColor: '#DC2626' } : {}}
+                      style={paymentMethodUuid && hasReceiptAttached && !isPlacingOrder ? { backgroundColor: '#DC2626' } : {}}
                     >
                       <div className={`absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                        paymentMethodUuid && receiptImageUrl && !uploadingReceipt && !isPlacingOrder
+                        paymentMethodUuid && hasReceiptAttached && !isPlacingOrder
                           ? 'bg-cafe-primary text-white'
                           : 'bg-cafe-textMuted/30 text-cafe-textMuted'
                       }`}>
@@ -968,13 +983,13 @@ Please confirm this order to proceed. Thank you for choosing Reina Shop! 🎮
                   {/* Messenger Order Placement */}
                   <button
                     onClick={handlePlaceOrder}
-                    disabled={!paymentMethodUuid || !receiptImageUrl || uploadingReceipt || !hasCopiedMessage}
+                    disabled={!paymentMethodUuid || !hasReceiptAttached || !hasCopiedMessage}
                     className={`w-full py-4 rounded-xl font-medium text-lg transition-all duration-200 transform ${
-                      paymentMethodUuid && receiptImageUrl && !uploadingReceipt && hasCopiedMessage
+                      paymentMethodUuid && hasReceiptAttached && hasCopiedMessage
                         ? 'text-white hover:opacity-90 hover:scale-[1.02]'
                         : 'glass text-cafe-textMuted cursor-not-allowed'
                     }`}
-                    style={paymentMethodUuid && receiptImageUrl && !uploadingReceipt && hasCopiedMessage ? { backgroundColor: '#DC2626' } : {}}
+                    style={paymentMethodUuid && hasReceiptAttached && hasCopiedMessage ? { backgroundColor: '#DC2626' } : {}}
                   >
                     {uploadingReceipt ? 'Uploading Receipt...' : 'Place Order via Messenger'}
                   </button>
